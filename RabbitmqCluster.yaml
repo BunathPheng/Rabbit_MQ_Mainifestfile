@@ -30,16 +30,28 @@ spec:
       collect_statistics_interval = 10000
       default_queue_type = quorum
       vm_memory_high_watermark.relative = 0.6
+  # This cluster has 1 worker and 3 tainted control-plane nodes.
+  # Tolerations let broker pods use control-plane nodes; preferred
+  # anti-affinity spreads them when possible without blocking Pending pods.
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
   affinity:
     podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: app.kubernetes.io/name
-                operator: In
-                values:
-                  - rabbitmq
-          topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - rabbitmq
+            topologyKey: kubernetes.io/hostname
   override:
     statefulSet:
       spec:

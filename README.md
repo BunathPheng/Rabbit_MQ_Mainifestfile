@@ -53,6 +53,10 @@ kubectl get rabbitmqcluster -n rabbitmq
 kubectl get pods -n rabbitmq -o wide
 ```
 
+If pods stay `Pending` with `FailedScheduling`, this cluster has only one untainted worker. The manifest now prefers spreading pods and tolerates control-plane taints so `rabbitmq-server-0/1/2` can start.
+
+The PVC message `the object has been modified` is a retryable bind race. It should clear after the pods can schedule.
+
 ## Files
 
 | Path | Role |
