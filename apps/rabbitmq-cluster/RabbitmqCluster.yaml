@@ -1,0 +1,55 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: rabbitmq
+spec:
+  replicas: 3
+  service:
+    type: ClusterIP
+  persistence:
+    # Uses the cluster default StorageClass. Set storageClassName if you need a specific one.
+    storage: 10Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  rabbitmq:
+    additionalConfig: |
+      cluster_partition_handling = pause_minority
+      disk_free_limit.relative = 0.4
+      collect_statistics_interval = 10000
+      default_queue_type = quorum
+      vm_memory_high_watermark.relative = 0.6
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - rabbitmq
+          topologyKey: kubernetes.io/hostname
+  override:
+    statefulSet:
+      spec:
+        template:
+          spec:
+            containers: []
+            topologySpreadConstraints:
+              - maxSkew: 1
+                topologyKey: topology.kubernetes.io/zone
+                whenUnsatisfiable: ScheduleAnyway
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: rabbitmq
