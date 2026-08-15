@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/BunathPheng/Rabbit_MQ_Mainifestfile.git
     targetRevision: main
-    path: apps/rabbitmq-cluster
+    path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: rabbitmq
