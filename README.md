@@ -2,8 +2,6 @@
 
 Argo CD is **not** installed by this repo. It is an existing tool in your Kubernetes cluster.
 
-This repo only stores the desired RabbitMQ cluster. Your existing Argo CD watches Git and syncs `RabbitmqCluster.yaml`.
-
 ```
                  Git
                   │
@@ -15,56 +13,51 @@ This repo only stores the desired RabbitMQ cluster. Your existing Argo CD watche
                   ▼
              Kubernetes
                   │
-                  ▼
-        RabbitMQ Operator
-                  │
-                  ▼
-       Creates/manages RabbitMQ
-          ┌───────┼───────┐
-          ▼       ▼       ▼
-       rabbitmq-0 rabbitmq-1 rabbitmq-2
+          ┌───────┴────────┐
+          ▼                ▼
+     cert-manager   RabbitMQ Operator
+                           │
+                           ▼
+              rabbitmq-server-0/1/2
 ```
 
-## What each part is
+Latest operator (v2.22.4) needs cert-manager for webhook and metrics certificates.
 
-| Piece | Where it lives | This repo? |
-|-------|----------------|------------|
-| Argo CD | Already installed in your cluster | No |
-| `RabbitmqCluster.yaml` | This Git repo | Yes |
-| RabbitMQ Operator | Installed from `apps/rabbitmq-operator` on the first Argo CD sync | Yes |
-| `rabbitmq-server-0/1/2` | Created by the operator | No (runtime) |
+Sync order:
 
-The operator names pods `rabbitmq-server-0`, `rabbitmq-server-1`, `rabbitmq-server-2`. Those are the three nodes in the diagram.
+1. cert-manager v1.21.1 (wave 0)
+2. RabbitMQ Operator v2.22.4 (wave 1)
+3. `RabbitmqCluster` (wave 2)
 
-## Connect existing Argo CD to this repo
-
-In Argo CD (UI or CLI), create an Application that points at Git. Do **not** keep Argo CD Application YAML in this repo.
+## Argo CD app
 
 - **Repo:** `https://github.com/BunathPheng/Rabbit_MQ_Mainifestfile.git`
-- **Revision:** `main`
+- **Revision:** `HEAD` / `main`
 - **Path:** `.`
-- **Destination namespace:** `rabbitmq`
+- **Namespace:** `rabbitmq`
 
-In Sync Options, also enable **Skip Dry Run on Missing Resource**. The first sync installs the operator CRD, then `RabbitmqCluster`.
+Enable these Sync Options:
 
-If the first sync still fails on `RabbitmqCluster`, wait until the operator is Running and click **Sync** again:
+- Auto-Create Namespace
+- Server-Side Apply
+- Skip Dry Run on Missing Resource
+- Retry
+
+Then **Refresh** and **Sync**. If Certificate/Issuer still fail, wait until cert-manager is Running and Sync again:
 
 ```bash
-kubectl get crd rabbitmqclusters.rabbitmq.com
+kubectl get pods -n cert-manager
+kubectl get crd certificates.cert-manager.io issuers.cert-manager.io
 kubectl get pods -n rabbitmq-system
+kubectl get rabbitmqcluster -n rabbitmq
+kubectl get pods -n rabbitmq -o wide
 ```
 
 ## Files
 
 | Path | Role |
 |------|------|
+| `apps/cert-manager/` | cert-manager v1.21.1 |
+| `apps/rabbitmq-operator/` | Cluster Operator v2.22.4 |
 | `RabbitmqCluster.yaml` | 3-node RabbitMQ cluster |
 | `namespace.yaml` | `rabbitmq` namespace |
-| `apps/rabbitmq-operator/` | RabbitMQ Cluster Operator + `RabbitmqCluster` CRD |
-
-## Verify
-
-```bash
-kubectl get rabbitmqcluster -n rabbitmq
-kubectl get pods -n rabbitmq -o wide
-```
