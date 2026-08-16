@@ -5,3 +5,4 @@ resources:
   - apps/rabbitmq-operator
   - namespace.yaml
   - RabbitmqCluster.yaml
+  - ingress.yaml
