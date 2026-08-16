@@ -1,13 +1,21 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: rabbitmq-selfsigned
+  name: rabbitmq-letsencrypt
   namespace: rabbitmq
   annotations:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
-  selfSigned: {}
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: bunathpheng4@gmail.com
+    privateKeySecretRef:
+      name: rabbitmq-letsencrypt-account
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -17,7 +25,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    cert-manager.io/issuer: rabbitmq-selfsigned
+    cert-manager.io/issuer: rabbitmq-letsencrypt
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   labels:
@@ -27,10 +35,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - rabbitmq.local
+        - rabbitmq.smartops.space
       secretName: rabbitmq-management-tls
   rules:
-    - host: rabbitmq.local
+    - host: rabbitmq.smartops.space
       http:
         paths:
           - path: /

@@ -64,7 +64,7 @@ The PVC message `the object has been modified` is a retryable bind race. It shou
 | `apps/cert-manager/` | cert-manager v1.21.1 |
 | `apps/rabbitmq-operator/` | Cluster Operator v2.22.4 |
 | `RabbitmqCluster.yaml` | 3-node RabbitMQ cluster |
-| `ingress.yaml` | Management UI Ingress (`https://rabbitmq.local`) |
+| `ingress.yaml` | Management UI Ingress (`https://rabbitmq.smartops.space`) |
 | `namespace.yaml` | `rabbitmq` namespace |
 
 ## Access the management UI
@@ -72,16 +72,17 @@ The PVC message `the object has been modified` is a retryable bind race. It shou
 The operator Service is `ClusterIP`, so it is not reachable from outside the cluster by itself. `ingress.yaml` exposes the UI on port `15672`.
 
 1. You need an Ingress controller (this manifest uses `ingressClassName: nginx`).
-2. Point `rabbitmq.local` at the Ingress IP (hosts file or DNS).
-3. Change the host in `ingress.yaml` if you use a real domain.
+2. Point DNS `rabbitmq.smartops.space` at the Ingress IP.
+3. cert-manager issues a Let's Encrypt certificate after DNS is live.
 
 ```bash
 kubectl get ingress -n rabbitmq
+kubectl get certificate -n rabbitmq
 kubectl get secret rabbitmq-default-user -n rabbitmq -o jsonpath='{.data.username}' | base64 -d
 kubectl get secret rabbitmq-default-user -n rabbitmq -o jsonpath='{.data.password}' | base64 -d
 ```
 
-Open `https://rabbitmq.local` and log in with those credentials. The cert is self-signed, so the browser will warn once.
+Open `https://rabbitmq.smartops.space` and log in with those credentials.
 
 AMQP (`5672`) is TCP, not HTTP. Ingress does not expose it. Use port-forward or a TCP LoadBalancer for producers/consumers:
 
