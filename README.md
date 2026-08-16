@@ -71,9 +71,9 @@ The PVC message `the object has been modified` is a retryable bind race. It shou
 
 The operator Service is `ClusterIP`, so it is not reachable from outside the cluster by itself. `ingress.yaml` exposes the UI on port `15672`.
 
-1. You need an Ingress controller (this manifest uses `ingressClassName: nginx`).
-2. Point DNS `rabbitmq.smartops.space` at the Ingress IP.
-3. cert-manager issues a Let's Encrypt certificate after DNS is live.
+1. This cluster uses Traefik (`ingressClassName: traefik`), not nginx.
+2. Point DNS `rabbitmq.smartops.space` at the Traefik / Cloudflare origin.
+3. cert-manager issues a Let's Encrypt certificate after HTTP-01 succeeds.
 
 ```bash
 kubectl get ingress -n rabbitmq
