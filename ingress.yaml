@@ -1,21 +1,13 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: rabbitmq-letsencrypt
+  name: rabbitmq-selfsigned
   namespace: rabbitmq
   annotations:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: bunathpheng4@gmail.com
-    privateKeySecretRef:
-      name: rabbitmq-letsencrypt-account
-    solvers:
-      - http01:
-          ingress:
-            ingressClassName: traefik
+  selfSigned: {}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -25,7 +17,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    cert-manager.io/issuer: rabbitmq-letsencrypt
+    cert-manager.io/issuer: rabbitmq-selfsigned
   labels:
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/part-of: rabbitmq
